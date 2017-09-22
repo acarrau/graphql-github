@@ -28,7 +28,7 @@ const RepoType = new GraphQLObjectType({
 const UserType = new GraphQLObjectType({
     name: 'User',
     description: 'User',
-    fields: {
+    fields: () => ({
         name: {
             type: GraphQLString,
             resolve: data => data.name
@@ -43,13 +43,12 @@ const UserType = new GraphQLObjectType({
         },
         repos: {
             type: new GraphQLList(RepoType),
-            resolve: (root, args) => {
-                console.log("root", root, args)
-                return fetch(`https://api.github.com/users/${args.userName}/repos`)
+            resolve: (parent) => {
+                return fetch(`https://api.github.com/users/${parent._userName}/repos`)
                     .then(response => response.json())
             }
         }
-    }
+    })
 })
 
 module.exports = new GraphQLSchema({
@@ -64,6 +63,9 @@ module.exports = new GraphQLSchema({
                 },
                 resolve: (root, args) => fetch(`https://api.github.com/users/${args.userName}`)
                     .then(response => response.json())
+                    .then(response => Object.assign({}, response, {
+                        _userName: args.userName
+                    }))
             }
         })
     })
